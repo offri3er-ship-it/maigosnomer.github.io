@@ -13,6 +13,13 @@ const loadingElement = document.getElementById('loading');
 const manualInput = document.getElementById('manual-input');
 const cameraContainer = document.getElementById('camera-container');
 
+// Конфигурация
+const CONFIG = {
+    EXTERNAL_BOT_USERNAME: 'ваш_существующий_бот', // Замените на username вашего бота
+    REQUEST_TIMEOUT: 10000, // 10 секунд
+    MAX_RETRIES: 3
+};
+
 // Инициализация приложения
 function init() {
     tg.expand();
@@ -192,7 +199,7 @@ async function recognizePlateFromImage(canvasElement) {
         const cleanedPlate = cleanPlateText(text);
         
         showLoading(false);
-        showResult(cleanedPlate, true);
+        processPlateNumber(cleanedPlate, true);
         
     } catch (error) {
         console.error('Ошибка распознавания:', error);
@@ -261,13 +268,22 @@ function processManualInput() {
         return;
     }
     
-    showResult(plateNumber, false);
+    processPlateNumber(plateNumber, false);
 }
 
-// Показать результат
-function showResult(plateNumber, fromCamera) {
+// Основная функция обработки номера
+function processPlateNumber(plateNumber, fromCamera) {
     const source = fromCamera ? 'распознан камерой' : 'введен вручную';
     
+    // Показываем начальный результат
+    showInitialResult(plateNumber, source);
+    
+    // Запрашиваем данные у внешнего бота
+    requestVehicleInfo(plateNumber);
+}
+
+// Показ начального результата
+function showInitialResult(plateNumber, source) {
     document.getElementById('recognized-plate').innerHTML = `
         <div class="result-item">
             <strong>Номер ${source}:</strong> ${plateNumber}
@@ -276,36 +292,218 @@ function showResult(plateNumber, fromCamera) {
     
     document.getElementById('vehicle-info').innerHTML = `
         <div class="result-item">
-            <p>🔍 <strong>Ищем информацию по номеру...</strong></p>
-            <p>Данные будут отправлены в чат с ботом</p>
+            <div class="loading">
+                <div class="spinner"></div>
+                <p>🔍 <strong>Запрашиваем информацию у внешнего сервиса...</strong></p>
+                <p>Это может занять несколько секунд</p>
+            </div>
         </div>
     `;
     
     showResultContainer();
-    
-    // Отправляем данные в бот
-    sendPlateToBot(plateNumber);
 }
 
-// Отправка номера в бот
-function sendPlateToBot(plateNumber) {
-    const user = tg.initDataUnsafe.user;
+// Запрос информации у внешнего бота
+async function requestVehicleInfo(plateNumber) {
+    try {
+        console.log('Запрашиваем информацию для номера:', plateNumber);
+        
+        // Вариант 1: Прямой запрос к API (если у бота есть API)
+        // const vehicleInfo = await fetchFromExternalAPI(plateNumber);
+        
+        // Вариант 2: Имитация запроса через Telegram
+        const vehicleInfo = await simulateExternalBotRequest(plateNumber);
+        
+        // Показываем результат
+        showVehicleInfo(plateNumber, vehicleInfo);
+        
+    } catch (error) {
+        console.error('Ошибка запроса информации:', error);
+        showErrorResult(plateNumber, 'Не удалось получить информацию от внешнего сервиса');
+    }
+}
+
+// Имитация запроса к внешнему боту
+async function simulateExternalBotRequest(plateNumber) {
+    return new Promise((resolve) => {
+        // Имитируем задержку запроса
+        setTimeout(() => {
+            // Демо-данные (замените на реальный запрос к вашему боту)
+            const demoData = {
+                'А123БВ777': {
+                    brand: 'Toyota',
+                    model: 'Camry',
+                    year: '2020',
+                    color: 'Черный',
+                    vin: '6T123456789012345',
+                    engine: '2.5L',
+                    power: '181 л.с.',
+                    owner: 'Иванов И.И.',
+                    status: 'Не в розыске',
+                    insurance: 'Действует до 12.12.2024',
+                    accidents: 'Не участвовал',
+                    restrictions: 'Нет ограничений'
+                },
+                'О777ОО177': {
+                    brand: 'BMW',
+                    model: 'X5',
+                    year: '2019',
+                    color: 'Белый',
+                    vin: 'WBA12345678901234',
+                    engine: '3.0L',
+                    power: '249 л.с.',
+                    owner: 'Петров П.П.',
+                    status: 'Не в розыске',
+                    insurance: 'Действует до 15.03.2025',
+                    accidents: 'Не участвовал',
+                    restrictions: 'Нет ограничений'
+                }
+            };
+            
+            if (demoData[plateNumber]) {
+                resolve({
+                    success: true,
+                    data: demoData[plateNumber],
+                    source: 'Внешний сервис'
+                });
+            } else {
+                resolve({
+                    success: false,
+                    error: 'Номер не найден в базе данных',
+                    source: 'Внешний сервис'
+                });
+            }
+        }, 2000); // Имитация задержки сети
+    });
+}
+
+// Показ информации об автомобиле
+function showVehicleInfo(plateNumber, response) {
+    if (!response.success) {
+        showErrorResult(plateNumber, response.error);
+        return;
+    }
     
-    const data = {
-        action: 'recognize_plate',
-        plate_number: plateNumber,
-        user_id: user?.id,
-        username: user?.username,
-        timestamp: new Date().toISOString()
-    };
+    const info = response.data;
     
-    // Отправляем данные в бот
-    tg.sendData(JSON.stringify(data));
+    document.getElementById('vehicle-info').innerHTML = `
+        <div class="result-item">
+            <h4>🚗 Информация об автомобиле</h4>
+            <div style="background: #000; color: #fff; padding: 15px; border-radius: 8px; text-align: center; margin: 10px 0; font-family: monospace; font-size: 20px; font-weight: bold;">
+                ${plateNumber}
+            </div>
+            
+            <div class="info-grid">
+                <div class="info-item">
+                    <span class="info-label">Марка:</span>
+                    <span class="info-value">${info.brand}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Модель:</span>
+                    <span class="info-value">${info.model}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Год:</span>
+                    <span class="info-value">${info.year}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Цвет:</span>
+                    <span class="info-value">${info.color}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Двигатель:</span>
+                    <span class="info-value">${info.engine}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Мощность:</span>
+                    <span class="info-value">${info.power}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">VIN:</span>
+                    <span class="info-value" style="font-family: monospace;">${info.vin}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Владелец:</span>
+                    <span class="info-value">${info.owner}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Статус:</span>
+                    <span class="info-value" style="color: #28a745;">${info.status}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Страховка:</span>
+                    <span class="info-value">${info.insurance}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">ДТП:</span>
+                    <span class="info-value">${info.accidents}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Ограничения:</span>
+                    <span class="info-value">${info.restrictions}</span>
+                </div>
+            </div>
+            
+            <div style="margin-top: 15px; padding: 10px; background: #e8f5e8; border-radius: 8px;">
+                <small>Источник: ${response.source} • ${new Date().toLocaleString('ru-RU')}</small>
+            </div>
+        </div>
+        
+        <div class="result-item">
+            <button class="btn primary" onclick="openInExternalBot('${plateNumber}')">
+                📱 Открыть в основном боте
+            </button>
+            <button class="btn secondary" onclick="resetScanner()">
+                🔄 Новый поиск
+            </button>
+        </div>
+    `;
+}
+
+// Показ ошибки
+function showErrorResult(plateNumber, errorMessage) {
+    document.getElementById('vehicle-info').innerHTML = `
+        <div class="result-item">
+            <div style="text-align: center; padding: 20px; color: #dc3545;">
+                <div style="font-size: 3rem; margin-bottom: 15px;">❌</div>
+                <h4>Информация не найдена</h4>
+                <p>${errorMessage}</p>
+                <p>Номер: <strong>${plateNumber}</strong></p>
+            </div>
+            
+            <div style="margin-top: 15px;">
+                <button class="btn primary" onclick="openInExternalBot('${plateNumber}')">
+                    📱 Попробовать в основном боте
+                </button>
+                <button class="btn secondary" onclick="resetScanner()">
+                    🔄 Новый поиск
+                </button>
+            </div>
+        </div>
+    `;
+}
+
+// Открыть в основном боте
+function openInExternalBot(plateNumber) {
+    const botUsername = CONFIG.EXTERNAL_BOT_USERNAME;
+    const url = `https://t.me/${botUsername}?start=plate_${plateNumber}`;
     
-    // Закрываем мини-приложение через 3 секунды
+    // Открываем бота
+    tg.openTelegramLink(url);
+    
+    // Закрываем мини-приложение
     setTimeout(() => {
         tg.close();
-    }, 3000);
+    }, 1000);
+}
+
+// Сброс сканера
+function resetScanner() {
+    closeCamera();
+    const plateInput = document.getElementById('plate-input');
+    plateInput.value = '';
+    resultContainer.classList.add('hidden');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 // Вспомогательные функции
