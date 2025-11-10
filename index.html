@@ -6,33 +6,6 @@
     <title>Распознавание автономеров</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link rel="stylesheet" href="style.css">
-    <style>
-        .info-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 8px;
-            margin: 15px 0;
-        }
-        .info-item {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-            padding: 10px;
-            background: #f8f9fa;
-            border-radius: 8px;
-            border-left: 4px solid #2481cc;
-        }
-        .info-label {
-            font-weight: 600;
-            color: #495057;
-            font-size: 0.8rem;
-        }
-        .info-value {
-            color: #212529;
-            font-size: 0.9rem;
-            font-weight: 500;
-        }
-    </style>
 </head>
 <body>
     <div class="container">
@@ -49,10 +22,10 @@
         <div class="card">
             <h3>📷 Сфотографируйте автомобильный номер</h3>
             
-            <div id="camera-container" style="display: none;">
-                <video id="video" autoplay playsinline style="width: 100%; border-radius: 12px; background: #000;"></video>
+            <div id="camera-container">
+                <video id="video" autoplay playsinline></video>
                 <canvas id="canvas"></canvas>
-                <button id="capture-btn" class="btn primary" style="display: none; margin-top: 10px;">📸 Сделать фото</button>
+                <button id="capture-btn" class="btn primary">📸 Сделать фото</button>
             </div>
             
             <div id="camera-controls">
@@ -64,8 +37,7 @@
         <div class="card" id="manual-input">
             <h3>Или введите номер вручную</h3>
             <input type="text" id="plate-input" placeholder="Например: А123БВ777" 
-                   style="width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 1px solid #ccc; text-align: center; font-size: 16px;"
-                   oninput="formatPlateInput(this)">
+                   maxlength="9">
             <button class="btn primary" onclick="processManualInput()">🔍 Найти информацию</button>
         </div>
         
