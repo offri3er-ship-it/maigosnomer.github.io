@@ -6,6 +6,31 @@
     <title>Распознавание автономеров</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link rel="stylesheet" href="style.css">
+    <style>
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin: 15px 0;
+        }
+        .info-item {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            padding: 8px;
+            background: #f8f9fa;
+            border-radius: 6px;
+        }
+        .info-label {
+            font-weight: 600;
+            color: #495057;
+            font-size: 0.85rem;
+        }
+        .info-value {
+            color: #212529;
+            font-size: 0.9rem;
+        }
+    </style>
 </head>
 <body>
     <div class="container">
@@ -44,8 +69,8 @@
         
         <div id="result-container" class="hidden">
             <div class="result">
-                <h3>Результат распознавания:</h3>
-                <div id="recognized-plate">Обработка...</div>
+                <h3>Результат проверки:</h3>
+                <div id="recognized-plate"></div>
                 <div id="vehicle-info"></div>
             </div>
         </div>
