@@ -260,3 +260,204 @@ footer {
         font-size: 20px;
     }
 }
+
+/* Уведомления */
+.notification {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #333;
+    color: white;
+    padding: 12px 20px;
+    border-radius: 8px;
+    z-index: 1000;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.notification.show {
+    opacity: 1;
+}
+
+.notification.success {
+    background: #28a745;
+}
+
+.notification.error {
+    background: #dc3545;
+}
+
+.notification.info {
+    background: #17a2b8;
+}
+
+/* Сетка информации об автомобиле */
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 8px;
+    margin: 15px 0;
+}
+
+.info-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 10px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border-left: 4px solid #2481cc;
+}
+
+.info-label {
+    font-weight: 600;
+    color: #495057;
+    font-size: 0.8rem;
+}
+
+.info-value {
+    color: #212529;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+/* Специфические стили для VIN */
+.info-value[style*="monospace"] {
+    font-family: 'Courier New', monospace;
+    letter-spacing: 0.5px;
+}
+
+/* Стили для статусов */
+.status-success {
+    color: #28a745;
+    font-weight: 600;
+}
+
+.status-warning {
+    color: #ffc107;
+    font-weight: 600;
+}
+
+.status-error {
+    color: #dc3545;
+    font-weight: 600;
+}
+
+/* Дополнительные стили для улучшения UX */
+.loading-text {
+    text-align: center;
+    color: #666;
+    font-style: italic;
+}
+
+.source-info {
+    background: #e8f5e8;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    color: #2d5016;
+    margin-top: 10px;
+}
+
+/* Анимации */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.result-item {
+    animation: fadeIn 0.3s ease-out;
+}
+
+/* Стили для разных состояний кнопок */
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.btn:disabled:active {
+    transform: none;
+}
+
+/* Стили для мобильных устройств */
+@media (max-width: 360px) {
+    .container {
+        padding: 10px;
+    }
+    
+    .card {
+        padding: 12px;
+    }
+    
+    .btn {
+        padding: 12px 16px;
+        font-size: 14px;
+    }
+    
+    input[type="text"] {
+        padding: 12px;
+        font-size: 14px;
+    }
+    
+    .info-grid {
+        grid-template-columns: 1fr;
+        gap: 6px;
+    }
+}
+
+/* Темная тема поддержка */
+@media (prefers-color-scheme: dark) {
+    .info-item {
+        background: #2d3748;
+    }
+    
+    .info-label {
+        color: #cbd5e0;
+    }
+    
+    .info-value {
+        color: #e2e8f0;
+    }
+    
+    .source-info {
+        background: #2d5016;
+        color: #c6f6d5;
+    }
+}
+
+/* Улучшения для доступности */
+.btn:focus {
+    outline: 2px solid var(--tg-theme-button-color);
+    outline-offset: 2px;
+}
+
+input[type="text"]:focus {
+    box-shadow: 0 0 0 3px rgba(37, 129, 204, 0.1);
+}
+
+/* Стили для скролла */
+::-webkit-scrollbar {
+    width: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--tg-theme-button-color);
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #1a6fb3;
+}
