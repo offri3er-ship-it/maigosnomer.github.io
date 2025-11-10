@@ -20,25 +20,26 @@
         </div>
         
         <div class="card">
-            <h3>Сфотографируйте автомобильный номер</h3>
+            <h3>📷 Сфотографируйте автомобильный номер</h3>
             
-            <div id="camera-container">
-                <video id="video" autoplay playsinline></video>
+            <div id="camera-container" style="display: none;">
+                <video id="video" autoplay playsinline style="width: 100%; border-radius: 12px; background: #000;"></video>
                 <canvas id="canvas"></canvas>
-                <button id="capture-btn" class="btn">📸 Сделать фото</button>
+                <button id="capture-btn" class="btn primary" style="display: none; margin-top: 10px;">📸 Сделать фото</button>
             </div>
             
             <div id="camera-controls">
-                <button class="btn" onclick="initCamera()">🎥 Включить камеру</button>
-                <button class="btn" onclick="switchCamera()">🔄 Переключить камеру</button>
+                <button class="btn primary" onclick="initCamera()">🎥 Включить камеру</button>
+                <button class="btn secondary" onclick="switchCamera()">🔄 Переключить камеру</button>
             </div>
         </div>
         
         <div class="card" id="manual-input">
             <h3>Или введите номер вручную</h3>
             <input type="text" id="plate-input" placeholder="Например: А123БВ777" 
-                   style="width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 1px solid #ccc;">
-            <button class="btn" onclick="processManualInput()">🔍 Найти информацию</button>
+                   style="width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 1px solid #ccc;"
+                   oninput="formatPlateInput(this)">
+            <button class="btn primary" onclick="processManualInput()">🔍 Найти информацию</button>
         </div>
         
         <div id="result-container" class="hidden">
