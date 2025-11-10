@@ -15,7 +15,7 @@ const cameraContainer = document.getElementById('camera-container');
 
 // Конфигурация
 const CONFIG = {
-    EXTERNAL_BOT_USERNAME: 'ваш_существующий_бот', // Замените на username вашего бота
+    EXTERNAL_BOT_USERNAME: 'GH_800_bot', // Замените на username вашего бота
     REQUEST_TIMEOUT: 10000, // 10 секунд
     MAX_RETRIES: 3
 };
