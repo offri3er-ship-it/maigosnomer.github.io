@@ -1,3 +1,4 @@
+// Инициализация Telegram Web App
 const tg = window.Telegram.WebApp;
 let currentStream = null;
 let usingFrontCamera = false;
@@ -19,6 +20,20 @@ function init() {
     
     // Показать поле для ручного ввода
     manualInput.classList.remove('hidden');
+    
+    // Показать информацию о пользователе
+    const user = tg.initDataUnsafe.user;
+    const userDataElement = document.getElementById('user-data');
+    
+    if (user) {
+        userDataElement.innerHTML = `
+            <p><strong>ID:</strong> ${user.id}</p>
+            <p><strong>Имя:</strong> ${user.first_name} ${user.last_name || ''}</p>
+            <p><strong>Username:</strong> @${user.username || 'не указан'}</p>
+        `;
+    } else {
+        userDataElement.innerHTML = '<p>Данные пользователя недоступны</p>';
+    }
     
     console.log('Mini App инициализирован');
 }
