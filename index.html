@@ -49,6 +49,17 @@
             </div>
         </div>
         
+        <!-- Виджет Avtocod -->
+        <div class="card" id="avtocod-widget-container">
+            <h3>🔍 Проверка через Автокод</h3>
+            <div id="avtocod-widget">
+                <avtocod-widget refid="132395" chan="telegram-mini-app"></avtocod-widget>
+            </div>
+            <div class="input-hint">
+                Используйте виджет для получения полного отчета об автомобиле
+            </div>
+        </div>
+        
         <div class="loading hidden" id="loading">
             <div class="spinner"></div>
             <p>⏳ Загружаем данные...</p>
@@ -56,6 +67,7 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
+    <script defer src='https://pp.spectrumdata.ru/partner-scripts/avtocod_form_v2.js'></script>
     <script src="app.js"></script>
 </body>
 </html>
