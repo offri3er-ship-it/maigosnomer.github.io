@@ -70,6 +70,7 @@ header p {
     margin: 8px 0;
     text-align: center;
     display: block;
+    text-decoration: none;
 }
 
 .btn.primary {
@@ -93,6 +94,7 @@ header p {
     width: 100%;
     max-width: 400px;
     margin: 0 auto 16px;
+    display: none;
 }
 
 #video {
@@ -259,37 +261,6 @@ footer {
     .plate-number {
         font-size: 20px;
     }
-}
-
-/* Уведомления */
-.notification {
-    position: fixed;
-    top: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: #333;
-    color: white;
-    padding: 12px 20px;
-    border-radius: 8px;
-    z-index: 1000;
-    opacity: 0;
-    transition: opacity 0.3s ease;
-}
-
-.notification.show {
-    opacity: 1;
-}
-
-.notification.success {
-    background: #28a745;
-}
-
-.notification.error {
-    background: #dc3545;
-}
-
-.notification.info {
-    background: #17a2b8;
 }
 
 /* Сетка информации об автомобиле */
@@ -460,4 +431,35 @@ input[type="text"]:focus {
 
 ::-webkit-scrollbar-thumb:hover {
     background: #1a6fb3;
+}
+
+/* Уведомления */
+.notification {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #333;
+    color: white;
+    padding: 12px 20px;
+    border-radius: 8px;
+    z-index: 1000;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.notification.show {
+    opacity: 1;
+}
+
+.notification.success {
+    background: #28a745;
+}
+
+.notification.error {
+    background: #dc3545;
+}
+
+.notification.info {
+    background: #17a2b8;
 }
