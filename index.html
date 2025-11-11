@@ -11,110 +11,80 @@
     <div class="container">
         <header class="header">
             <h1>🚗 Проверка авто по госномеру</h1>
-            <p>Сфотографируйте номер или введите вручную</p>
+            <p>Загрузите фото автомобиля с номером</p>
         </header>
 
-        <div class="mode-selector">
-            <button class="mode-btn active" data-mode="camera">📷 Камера</button>
-            <button class="mode-btn" data-mode="manual">⌨️ Вручную</button>
-        </div>
+        <div class="upload-section">
+            <div class="upload-area" id="uploadArea">
+                <div class="upload-icon">📁</div>
+                <h3>Загрузите фото автомобиля</h3>
+                <p>Номер должен быть четко виден на фото</p>
+                <input type="file" id="fileInput" accept="image/*" class="hidden">
+                <button class="upload-btn" onclick="document.getElementById('fileInput').click()">
+                    Выбрать фото
+                </button>
+            </div>
 
-        <!-- Режим камеры -->
-        <div id="cameraMode" class="mode-content active">
-            <div class="camera-section">
-                <div id="cameraError" class="camera-error hidden">
-                    <div class="error-icon">📱</div>
-                    <h3>Не удалось подключить камеру</h3>
-                    <p>Используйте загрузку фото или ручной ввод</p>
-                    <button class="upload-btn" onclick="document.getElementById('fileInput').click()">
-                        📁 Загрузить фото номера
-                    </button>
-                </div>
-
-                <div id="cameraContainer" class="camera-container hidden">
-                    <video id="cameraVideo" autoplay playsinline muted></video>
-                    <canvas id="cameraCanvas" class="hidden"></canvas>
-                    <div class="camera-overlay">
-                        <div class="scan-frame">
-                            <div class="scan-corner top-left"></div>
-                            <div class="scan-corner top-right"></div>
-                            <div class="scan-corner bottom-left"></div>
-                            <div class="scan-corner bottom-right"></div>
-                        </div>
-                        <div class="scan-instruction">
-                            Наведите на номер автомобиля
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="upload-section">
-                    <div class="upload-area" id="uploadArea">
-                        <div class="upload-icon">📁</div>
-                        <p>Загрузите фото номера</p>
-                        <p class="upload-hint">Фото должно быть четким, номер занимать большую часть кадра</p>
-                        <input type="file" id="fileInput" accept="image/*" class="hidden">
-                        <button class="upload-btn" onclick="document.getElementById('fileInput').click()">
-                            Выбрать фото
-                        </button>
-                    </div>
-                </div>
-
-                <div class="camera-controls">
-                    <button id="captureBtn" class="capture-btn">📸 Сфотографировать</button>
-                    <button id="switchCamera" class="switch-btn">🔄 Камера</button>
-                </div>
-
-                <div id="capturedImage" class="captured-image hidden">
-                    <div class="image-container">
-                        <img id="previewImg" src="" alt="Captured">
-                        <div class="image-overlay">
-                            <div class="processing-area" id="processingArea"></div>
-                        </div>
-                    </div>
-                    <div class="capture-actions">
-                        <button id="retakeBtn" class="retake-btn">🔄 Переснять</button>
-                        <button id="processBtn" class="process-btn">🔍 Распознать номер</button>
-                    </div>
-                </div>
+            <div class="photo-tips">
+                <h4>📸 Советы для лучшего распознавания:</h4>
+                <ul>
+                    <li>Сфотографируйте номер крупным планом</li>
+                    <li>Убедитесь, что номер хорошо освещен</li>
+                    <li>Избегайте бликов и теней</li>
+                    <li>Держите камеру прямо напротив номера</li>
+                </ul>
             </div>
         </div>
 
-        <!-- Режим ручного ввода -->
-        <div id="manualMode" class="mode-content">
-            <div class="input-section">
-                <div class="input-group">
-                    <input 
-                        type="text" 
-                        id="plateInput" 
-                        placeholder="Например: А123АА777" 
-                        maxlength="9"
-                        class="plate-input"
-                    >
-                    <button id="checkButton" class="check-btn">Проверить</button>
-                </div>
-                <div class="examples">
-                    <small>Примеры: А123АА777, Х970ХУ777, ЕКХ777, P594KC99</small>
-                </div>
+        <div id="previewSection" class="preview-section hidden">
+            <div class="preview-header">
+                <h3>Предпросмотр фото</h3>
+                <button id="changePhoto" class="change-btn">🔄 Сменить фото</button>
             </div>
+            <div class="image-container">
+                <img id="previewImg" src="" alt="Preview">
+                <div class="detection-overlay" id="detectionOverlay"></div>
+            </div>
+            <button id="recognizeBtn" class="recognize-btn">🔍 Распознать номер</button>
         </div>
 
-        <div id="recognitionStatus" class="recognition-status hidden">
-            <div class="spinner small"></div>
-            <p>Обрабатываем изображение...</p>
-            <div class="recognition-steps">
-                <div class="step" id="step1">🔍 Поиск области номера</div>
-                <div class="step" id="step2">🖼️ Обработка изображения</div>
-                <div class="step" id="step3">📝 Распознавание текста</div>
+        <div id="processing" class="processing hidden">
+            <div class="spinner"></div>
+            <h3>Распознаем номер...</h3>
+            <div class="processing-steps">
+                <div class="step active">Анализируем изображение</div>
+                <div class="step">Ищем номерной знак</div>
+                <div class="step">Распознаем текст</div>
+                <div class="step">Проверяем результат</div>
             </div>
         </div>
 
         <div id="recognitionResult" class="recognition-result hidden">
-            <h3>Распознанный номер:</h3>
+            <div class="result-header">
+                <h3>🎉 Номер распознан!</h3>
+                <div class="confidence" id="confidence"></div>
+            </div>
             <div id="recognizedPlate" class="recognized-plate"></div>
-            <div class="confidence" id="confidence"></div>
-            <button id="useRecognized" class="use-btn">✅ Использовать этот номер</button>
-            <button id="tryManual" class="try-btn">✏️ Ввести вручную</button>
-            <button id="tryAgain" class="try-again-btn">🔄 Попробовать снова</button>
+            
+            <div class="plate-image">
+                <img id="croppedPlate" src="" alt="Распознанный номер">
+            </div>
+
+            <div class="result-actions">
+                <button id="checkAvtocod" class="avtocod-btn">📊 Проверить на Avtocod</button>
+                <button id="tryAnother" class="try-again-btn">🔄 Другой номер</button>
+            </div>
+        </div>
+
+        <div id="manualFallback" class="manual-fallback hidden">
+            <div class="fallback-header">
+                <h3>Не удалось распознать автоматически</h3>
+                <p>Введите номер вручную:</p>
+            </div>
+            <div class="input-group">
+                <input type="text" id="manualPlateInput" placeholder="Например: А123АА777" maxlength="9" class="plate-input">
+                <button id="manualCheckBtn" class="check-btn">Проверить</button>
+            </div>
         </div>
 
         <div id="loading" class="loading hidden">
@@ -127,20 +97,20 @@
                 <h3>Результат проверки</h3>
                 <div id="plateNumber" class="plate-number"></div>
             </div>
-            <div id="screenshotContainer" class="screenshot-container">
-                <!-- Данные будут здесь -->
-            </div>
+            <div id="screenshotContainer" class="screenshot-container"></div>
             <div class="actions">
-                <button id="newCheck" class="new-check-btn">Новая проверка</button>
+                <button id="newCheck" class="new-check-btn">🔄 Новая проверка</button>
             </div>
         </div>
 
         <div id="error" class="error hidden">
-            <p>Произошла ошибка при получении данных</p>
+            <p id="errorMessage">Произошла ошибка</p>
             <button id="retryButton" class="retry-btn">Попробовать снова</button>
         </div>
     </div>
 
+    <!-- Подключаем Google Cloud Vision API -->
+    <script src="https://apis.google.com/js/api.js"></script>
     <script src="app.js"></script>
 </body>
 </html>
