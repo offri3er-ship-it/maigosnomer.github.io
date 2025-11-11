@@ -3,71 +3,57 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Распознавание автономеров</title>
+    <title>Проверка авто по госномеру</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="container">
-        <header>
-            <h1>📷 Распознавание автономеров</h1>
-            <p>Сфотографируйте номер или введите вручную</p>
+        <header class="header">
+            <h1>🚗 Проверка авто по госномеру</h1>
+            <p>Введите госномер для получения полной информации</p>
         </header>
-        
-        <div class="card">
-            <h3>Информация о пользователе</h3>
-            <div id="user-data">Загрузка...</div>
-        </div>
-        
-        <div class="card">
-            <h3>📷 Сфотографируйте автомобильный номер</h3>
-            
-            <div id="camera-container">
-                <video id="video" autoplay playsinline></video>
-                <canvas id="canvas"></canvas>
-                <button id="capture-btn" class="btn primary">📸 Сделать фото</button>
+
+        <div class="input-section">
+            <div class="input-group">
+                <input 
+                    type="text" 
+                    id="plateInput" 
+                    placeholder="Например: А123АА777" 
+                    maxlength="9"
+                    class="plate-input"
+                >
+                <button id="checkButton" class="check-btn">Проверить</button>
             </div>
-            
-            <div id="camera-controls">
-                <button class="btn primary" onclick="initCamera()">🎥 Включить камеру</button>
-                <button class="btn secondary" onclick="switchCamera()">🔄 Переключить камеру</button>
+            <div class="examples">
+                <small>Примеры: А123АА777, Х970ХУ777, ЕКХ777</small>
             </div>
         </div>
-        
-        <div class="card" id="manual-input">
-            <h3>Или введите номер вручную</h3>
-            <input type="text" id="plate-input" placeholder="Например: А123БВ777" 
-                   maxlength="9">
-            <button class="btn primary" onclick="processManualInput()">🔍 Найти информацию</button>
-        </div>
-        
-        <div id="result-container" class="hidden">
-            <div class="result">
-                <h3>Результат проверки:</h3>
-                <div id="recognized-plate"></div>
-                <div id="vehicle-info"></div>
-            </div>
-        </div>
-        
-        <!-- Виджет Avtocod -->
-        <div class="card" id="avtocod-widget-container">
-            <h3>🔍 Проверка через Автокод</h3>
-            <div id="avtocod-widget">
-                <avtocod-widget refid="132395" chan="telegram-mini-app"></avtocod-widget>
-            </div>
-            <div class="input-hint">
-                Используйте виджет для получения полного отчета об автомобиле
-            </div>
-        </div>
-        
-        <div class="loading hidden" id="loading">
+
+        <div id="loading" class="loading hidden">
             <div class="spinner"></div>
-            <p>⏳ Загружаем данные...</p>
+            <p>Получаем данные с Avtocod...</p>
+        </div>
+
+        <div id="result" class="result hidden">
+            <div class="result-header">
+                <h3>Результат проверки</h3>
+                <div id="plateNumber" class="plate-number"></div>
+            </div>
+            <div id="screenshotContainer" class="screenshot-container">
+                <!-- Скриншот будет здесь -->
+            </div>
+            <div class="actions">
+                <button id="newCheck" class="new-check-btn">Новая проверка</button>
+            </div>
+        </div>
+
+        <div id="error" class="error hidden">
+            <p>Произошла ошибка при получении данных</p>
+            <button id="retryButton" class="retry-btn">Попробовать снова</button>
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
-    <script defer src='https://pp.spectrumdata.ru/partner-scripts/avtocod_form_v2.js'></script>
     <script src="app.js"></script>
 </body>
 </html>
