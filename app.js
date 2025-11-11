@@ -1,9 +1,8 @@
 class CarPlateChecker {
     constructor() {
         this.currentStream = null;
-        this.isFrontCamera = false; // По умолчанию основная камера
+        this.isFrontCamera = true;
         this.capturedImageData = null;
-        this.cameraAvailable = false;
         this.init();
     }
 
@@ -11,15 +10,11 @@ class CarPlateChecker {
         // Элементы камеры
         this.video = document.getElementById('cameraVideo');
         this.canvas = document.getElementById('cameraCanvas');
-        this.cameraContainer = document.getElementById('cameraContainer');
-        this.cameraError = document.getElementById('cameraError');
         this.captureBtn = document.getElementById('captureBtn');
         this.switchCamera = document.getElementById('switchCamera');
         this.previewImg = document.getElementById('previewImg');
         this.retakeBtn = document.getElementById('retakeBtn');
         this.processBtn = document.getElementById('processBtn');
-        this.fileInput = document.getElementById('fileInput');
-        this.uploadArea = document.getElementById('uploadArea');
         
         // Элементы режимов
         this.modeBtns = document.querySelectorAll('.mode-btn');
@@ -48,38 +43,13 @@ class CarPlateChecker {
 
         this.bindEvents();
         this.initTelegram();
-        this.checkCameraSupport();
+        this.startCamera();
     }
 
     initTelegram() {
         if (window.Telegram && Telegram.WebApp) {
             Telegram.WebApp.ready();
             Telegram.WebApp.expand();
-            // В Telegram Mini Apps можно использовать камеру через специальные методы
-            console.log('Telegram WebApp initialized');
-        }
-    }
-
-    async checkCameraSupport() {
-        try {
-            // Проверяем поддержку медиа устройств
-            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-                throw new Error('Камера не поддерживается в этом браузере');
-            }
-
-            // Проверяем разрешения
-            const permissions = await navigator.permissions.query({ name: 'camera' });
-            if (permissions.state === 'denied') {
-                throw new Error('Доступ к камере запрещен');
-            }
-
-            this.cameraAvailable = true;
-            console.log('Камера доступна');
-            
-        } catch (error) {
-            console.warn('Камера недоступна:', error.message);
-            this.showCameraError();
-            this.cameraAvailable = false;
         }
     }
 
@@ -97,10 +67,6 @@ class CarPlateChecker {
         this.switchCamera.addEventListener('click', () => this.switchCameraFn());
         this.retakeBtn.addEventListener('click', () => this.retakePhoto());
         this.processBtn.addEventListener('click', () => this.processImage());
-
-        // Загрузка файлов
-        this.fileInput.addEventListener('change', (e) => this.handleFileUpload(e));
-        this.uploadArea.addEventListener('click', () => this.fileInput.click());
 
         // Распознавание
         this.useRecognized.addEventListener('click', () => this.useRecognizedPlate());
@@ -133,23 +99,9 @@ class CarPlateChecker {
         this.manualMode.classList.toggle('active', mode === 'manual');
 
         if (mode === 'camera') {
-            this.initializeCamera();
+            this.startCamera();
         } else {
             this.stopCamera();
-        }
-    }
-
-    async initializeCamera() {
-        if (!this.cameraAvailable) {
-            this.showCameraError();
-            return;
-        }
-
-        try {
-            await this.startCamera();
-        } catch (error) {
-            console.error('Ошибка инициализации камеры:', error);
-            this.showCameraError();
         }
     }
 
@@ -157,64 +109,32 @@ class CarPlateChecker {
         try {
             this.stopCamera();
             
-            // Пробуем разные конфигурации камеры
             const constraints = {
                 video: {
                     facingMode: this.isFrontCamera ? 'user' : 'environment',
-                    width: { min: 640, ideal: 1280, max: 1920 },
-                    height: { min: 480, ideal: 720, max: 1080 },
-                    frameRate: { ideal: 30, max: 60 }
-                },
-                audio: false
+                    width: { ideal: 1280 },
+                    height: { ideal: 720 }
+                }
             };
 
-            // Пробуем основную конфигурацию
-            try {
-                this.currentStream = await navigator.mediaDevices.getUserMedia(constraints);
-            } catch (error) {
-                console.warn('Основная конфигурация не сработала, пробуем упрощенную:', error);
-                
-                // Упрощенная конфигурация
-                const simpleConstraints = {
-                    video: {
-                        facingMode: this.isFrontCamera ? 'user' : 'environment'
-                    },
-                    audio: false
-                };
-                
-                this.currentStream = await navigator.mediaDevices.getUserMedia(simpleConstraints);
-            }
-
+            this.currentStream = await navigator.mediaDevices.getUserMedia(constraints);
             this.video.srcObject = this.currentStream;
             
-            // Ждем загрузки видео
-            await new Promise((resolve) => {
-                this.video.onloadedmetadata = () => {
-                    this.video.play().then(resolve).catch(resolve);
-                };
-            });
-
             // Показываем контейнер камеры
-            this.cameraContainer.classList.remove('hidden');
-            this.cameraError.classList.add('hidden');
+            document.getElementById('cameraContainer').classList.remove('hidden');
             document.getElementById('capturedImage').classList.add('hidden');
             
-            console.log('Камера успешно запущена');
-            
         } catch (error) {
-            console.error('Ошибка запуска камеры:', error);
-            throw error;
+            console.error('Ошибка камеры:', error);
+            this.showError('Не удалось подключить камеру');
         }
     }
 
     stopCamera() {
         if (this.currentStream) {
-            this.currentStream.getTracks().forEach(track => {
-                track.stop();
-            });
+            this.currentStream.getTracks().forEach(track => track.stop());
             this.currentStream = null;
         }
-        this.video.srcObject = null;
     }
 
     switchCameraFn() {
@@ -223,67 +143,35 @@ class CarPlateChecker {
     }
 
     captureImage() {
-        try {
-            const context = this.canvas.getContext('2d');
-            this.canvas.width = this.video.videoWidth;
-            this.canvas.height = this.video.videoHeight;
-            
-            context.drawImage(this.video, 0, 0, this.canvas.width, this.canvas.height);
-            
-            // Сохраняем данные изображения
-            this.capturedImageData = this.canvas.toDataURL('image/jpeg');
-            this.previewImg.src = this.capturedImageData;
-            
-            // Показываем превью
-            this.cameraContainer.classList.add('hidden');
-            document.getElementById('capturedImage').classList.remove('hidden');
-            
-            this.stopCamera();
-            
-        } catch (error) {
-            console.error('Ошибка захвата изображения:', error);
-            this.showError('Не удалось сделать фото');
-        }
-    }
-
-    handleFileUpload(event) {
-        const file = event.target.files[0];
-        if (!file) return;
-
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            this.capturedImageData = e.target.result;
-            this.previewImg.src = this.capturedImageData;
-            
-            // Показываем превью
-            this.cameraContainer.classList.add('hidden');
-            this.cameraError.classList.add('hidden');
-            document.getElementById('capturedImage').classList.remove('hidden');
-        };
-        reader.readAsDataURL(file);
+        const context = this.canvas.getContext('2d');
+        this.canvas.width = this.video.videoWidth;
+        this.canvas.height = this.video.videoHeight;
+        
+        context.drawImage(this.video, 0, 0);
+        
+        // Сохраняем данные изображения
+        this.capturedImageData = this.canvas.toDataURL('image/jpeg');
+        this.previewImg.src = this.capturedImageData;
+        
+        // Показываем превью
+        document.getElementById('cameraContainer').classList.add('hidden');
+        document.getElementById('capturedImage').classList.remove('hidden');
+        
+        this.stopCamera();
     }
 
     retakePhoto() {
         document.getElementById('capturedImage').classList.add('hidden');
         this.recognitionResult.classList.add('hidden');
         this.recognitionStatus.classList.add('hidden');
-        
-        if (this.cameraAvailable) {
-            this.startCamera();
-        } else {
-            this.cameraError.classList.remove('hidden');
-        }
-    }
-
-    showCameraError() {
-        this.cameraContainer.classList.add('hidden');
-        this.cameraError.classList.remove('hidden');
+        this.startCamera();
     }
 
     async processImage() {
         this.recognitionStatus.classList.remove('hidden');
         
         try {
+            // Используем Tesseract.js для распознавания текста
             const recognizedText = await this.recognizeWithTesseract(this.capturedImageData);
             const plateNumber = this.extractPlateNumber(recognizedText);
             
@@ -298,59 +186,32 @@ class CarPlateChecker {
     }
 
     async recognizeWithTesseract(imageData) {
+        // Динамически загружаем Tesseract
+        const { createWorker } = await import('https://cdn.jsdelivr.net/npm/tesseract.js@4.1.1/dist/tesseract.min.js');
+        
+        const worker = await createWorker('rus', 1, {
+            logger: m => console.log(m)
+        });
+
         try {
-            // Используем CDN Tesseract
-            const { createWorker } = Tesseract;
-            
-            const worker = await createWorker('rus+eng', 1, {
-                logger: progress => {
-                    if (progress.status === 'recognizing text') {
-                        console.log(`Прогресс: ${Math.round(progress.progress * 100)}%`);
-                    }
-                }
-            });
-
-            // Настраиваем параметры для номерных знаков
-            await worker.setParameters({
-                tessedit_char_whitelist: 'ABEKMHOPCTYXАВЕКМНОРСТУХ0123456789',
-                tessedit_pageseg_mode: '7', // Одна строка текста
-            });
-
             const { data: { text } } = await worker.recognize(imageData);
             await worker.terminate();
-            
             return text;
-            
         } catch (error) {
-            console.error('Tesseract error:', error);
-            
-            // Простой fallback - пытаемся найти текст вручную
-            return this.fallbackTextRecognition(imageData);
+            await worker.terminate();
+            throw error;
         }
     }
 
-    fallbackTextRecognition(imageData) {
-        // Простая эвристика для извлечения текста из Data URL
-        // В реальном приложении здесь можно добавить более сложную логику
-        return "Ручной ввод требуется";
-    }
-
     extractPlateNumber(text) {
-        if (!text) return 'Не распознан';
+        // Очищаем текст и ищем российские номера
+        const cleanText = text.toUpperCase().replace(/[^A-ZА-Я0-9]/g, '');
         
-        // Очищаем текст
-        const cleanText = text.toUpperCase()
-            .replace(/[^A-ZА-Я0-9]/g, '')
-            .replace(/O/g, '0') // Заменяем похожие символы
-            .replace(/[|]/g, '1');
-
-        console.log('Очищенный текст:', cleanText);
-        
-        // Паттерны для российских номеров (типы 1, 1А)
+        // Паттерны для российских номеров
         const patterns = [
-            /[АВЕКМНОРСТУХ]\d{3}[АВЕКМНОРСТУХ]{2}\d{2,3}/, // Стандартный X123XX77
-            /[АВЕКМНОРСТУХ]{2}\d{3}\d{2,3}/, // Две буквы в начале XX12377
-            /[АВЕКМНОРСТУХ]\d{2}[АВЕКМНОРСТУХ]{2}\d{2,3}/, // X12XX77
+            /[АВЕКМНОРСТУХ]\d{3}[АВЕКМНОРСТУХ]{2}\d{2,3}/, // Стандартный
+            /[АВЕКМНОРСТУХ]{2}\d{3}\d{2,3}/, // Две буквы в начале
+            /\d{4}[АВЕКМНОРСТУХ]{2}\d{2,3}/  // Номера прицепов
         ];
 
         for (const pattern of patterns) {
@@ -360,12 +221,9 @@ class CarPlateChecker {
             }
         }
 
-        // Если не нашли по паттерну, ищем любую подходящую комбинацию
-        if (cleanText.length >= 6 && cleanText.length <= 9) {
-            return cleanText;
-        }
-
-        return 'Не распознан';
+        // Если не нашли по паттерну, пытаемся найти любую комбинацию из 6-9 символов
+        const potentialPlate = cleanText.match(/[A-ZА-Я0-9]{6,9}/);
+        return potentialPlate ? potentialPlate[0] : 'Не распознан';
     }
 
     showRecognitionResult(plateNumber) {
@@ -377,19 +235,17 @@ class CarPlateChecker {
         const plate = this.recognizedPlate.textContent;
         if (plate && plate !== 'Не распознан') {
             this.checkAvtocod(plate);
-        } else {
-            this.showError('Пожалуйста, введите номер вручную');
-            this.switchMode('manual');
         }
     }
 
     validatePlate(plate) {
-        if (!plate || plate === 'Не распознан') return false;
+        if (!plate) return false;
         
         const patterns = [
             /^[АВЕКМНОРСТУХ]\d{3}[АВЕКМНОРСТУХ]{2}\d{2,3}$/,
             /^[АВЕКМНОРСТУХ]{2}\d{3}\d{2,3}$/,
-            /^[АВЕКМНОРСТУХ]\d{2}[АВЕКМНОРСТУХ]{2}\d{2,3}$/,
+            /^[АВЕКМНОРСТУХ]{2}\d{4}\d{2,3}$/,
+            /^\d{4}[АВЕКМНОРСТУХ]{2}\d{2,3}$/
         ];
         
         return patterns.some(pattern => pattern.test(plate));
@@ -399,7 +255,7 @@ class CarPlateChecker {
         const plate = this.plateInput.value.trim();
         
         if (!this.validatePlate(plate)) {
-            this.showError('Введите корректный госномер. Пример: А123АА777');
+            this.showError('Введите корректный госномер');
             return;
         }
 
@@ -421,15 +277,83 @@ class CarPlateChecker {
     async getAvtocodData(plate) {
         const avtocodUrl = `https://avtocod.ru/proverkaavto/${plate}`;
         
-        return {
-            directUrl: avtocodUrl,
-            vin: 'Данные доступны по ссылке',
-            brand: 'Откройте полный отчет',
-            year: 'Для просмотра данных',
-            color: 'перейдите по ссылке ниже',
-            engine: '',
-            power: ''
+        try {
+            // Используем CORS proxy
+            const proxyUrl = 'https://api.allorigins.win/raw?url=';
+            const targetUrl = encodeURIComponent(avtocodUrl);
+            
+            const response = await fetch(proxyUrl + targetUrl, {
+                method: 'GET',
+                headers: {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+                }
+            });
+
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+
+            const html = await response.text();
+            return this.extractDataFromHTML(html, plate);
+            
+        } catch (error) {
+            console.warn('Proxy failed, showing direct link');
+            return {
+                directUrl: avtocodUrl,
+                data: null
+            };
+        }
+    }
+
+    extractDataFromHTML(html, plate) {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        
+        const carData = {
+            directUrl: `https://avtocod.ru/proverkaavto/${plate}`,
+            vin: this.extractVIN(doc),
+            brand: this.extractBrand(doc),
+            year: this.extractYear(doc),
+            color: this.extractColor(doc),
+            engine: this.extractEngine(doc),
+            power: this.extractPower(doc)
         };
+
+        return carData;
+    }
+
+    extractVIN(doc) {
+        return doc.querySelector('[data-vin]')?.getAttribute('data-vin') || 
+               doc.querySelector('.vin-code')?.textContent?.trim() ||
+               'Не найден';
+    }
+
+    extractBrand(doc) {
+        return doc.querySelector('.car-brand')?.textContent?.trim() ||
+               doc.querySelector('[class*="brand"]')?.textContent?.trim() ||
+               'Не указан';
+    }
+
+    extractYear(doc) {
+        return doc.querySelector('.car-year')?.textContent?.trim() ||
+               doc.querySelector('[class*="year"]')?.textContent?.trim() ||
+               'Не указан';
+    }
+
+    extractColor(doc) {
+        return doc.querySelector('.car-color')?.textContent?.trim() ||
+               doc.querySelector('[class*="color"]')?.textContent?.trim() ||
+               'Не указан';
+    }
+
+    extractEngine(doc) {
+        return doc.querySelector('.car-engine')?.textContent?.trim() ||
+               doc.querySelector('[class*="engine"]')?.textContent?.trim() ||
+               'Не указан';
+    }
+
+    extractPower(doc) {
+        return doc.querySelector('.car-power')?.textContent?.trim() ||
+               doc.querySelector('[class*="power"]')?.textContent?.trim() ||
+               'Не указан';
     }
 
     showLoading() {
@@ -441,18 +365,58 @@ class CarPlateChecker {
         this.hideAll();
         this.plateNumber.textContent = plate;
         
-        const resultHTML = `
-            <div class="direct-link">
-                <p>✅ Данные успешно получены!</p>
-                <p>Для просмотра полного отчета перейдите по ссылке:</p>
-                <a href="${data.directUrl}" target="_blank" class="direct-link-btn" onclick="this.style.opacity='0.7'">
-                    📊 Открыть полный отчет на Avtocod
-                </a>
-                <div class="link-info">
-                    <small>Ссылка откроется в браузере с полными данными об автомобиле</small>
+        let resultHTML = '';
+        
+        if (data.directUrl && !data.vin) {
+            resultHTML = `
+                <div class="direct-link">
+                    <p>Данные успешно получены с Avtocod!</p>
+                    <p>Для просмотра полного отчета перейдите по ссылке:</p>
+                    <a href="${data.directUrl}" target="_blank" class="direct-link-btn">
+                        📊 Открыть полный отчет на Avtocod
+                    </a>
+                    <div class="link-info">
+                        <small>Ссылка откроется в браузере с полными данными об автомобиле</small>
+                    </div>
                 </div>
-            </div>
-        `;
+            `;
+        } else {
+            resultHTML = `
+                <div class="parsed-data">
+                    <div class="data-grid">
+                        <div class="data-item">
+                            <span class="label">VIN:</span>
+                            <span class="value">${data.vin}</span>
+                        </div>
+                        <div class="data-item">
+                            <span class="label">Марка:</span>
+                            <span class="value">${data.brand}</span>
+                        </div>
+                        <div class="data-item">
+                            <span class="label">Год:</span>
+                            <span class="value">${data.year}</span>
+                        </div>
+                        <div class="data-item">
+                            <span class="label">Цвет:</span>
+                            <span class="value">${data.color}</span>
+                        </div>
+                        <div class="data-item">
+                            <span class="label">Двигатель:</span>
+                            <span class="value">${data.engine}</span>
+                        </div>
+                        <div class="data-item">
+                            <span class="label">Мощность:</span>
+                            <span class="value">${data.power}</span>
+                        </div>
+                    </div>
+                    <div class="full-report">
+                        <a href="${data.directUrl}" target="_blank" class="direct-link-btn">
+                            📊 Полный отчет на Avtocod
+                        </a>
+                    </div>
+                </div>
+            `;
+        }
         
         this.screenshotContainer.innerHTML = resultHTML;
         this.result.classList.remove('hidden');
@@ -479,29 +443,76 @@ class CarPlateChecker {
     }
 }
 
-// Загружаем Tesseract.js динамически
-function loadTesseract() {
-    return new Promise((resolve, reject) => {
-        if (window.Tesseract) {
-            resolve();
-            return;
-        }
-
-        const script = document.createElement('script');
-        script.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@4.1.1/dist/tesseract.min.js';
-        script.onload = resolve;
-        script.onerror = reject;
-        document.head.appendChild(script);
-    });
-}
-
-// Инициализация приложения после загрузки Tesseract
-document.addEventListener('DOMContentLoaded', async () => {
-    try {
-        await loadTesseract();
-        window.app = new CarPlateChecker();
-    } catch (error) {
-        console.error('Failed to load Tesseract:', error);
-        window.app = new CarPlateChecker();
+// Добавляем стили для данных
+const additionalStyles = `
+    .direct-link {
+        text-align: center;
+        padding: 20px;
     }
+    
+    .direct-link-btn {
+        display: inline-block;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 12px 24px;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 600;
+        margin: 15px 0;
+        transition: all 0.3s ease;
+    }
+    
+    .direct-link-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+    }
+    
+    .link-info {
+        margin-top: 10px;
+    }
+    
+    .parsed-data {
+        padding: 10px;
+    }
+    
+    .data-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 12px;
+        margin-bottom: 20px;
+    }
+    
+    .data-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px;
+        background: #f8f9fa;
+        border-radius: 8px;
+    }
+    
+    .data-item .label {
+        font-weight: 600;
+        color: #666;
+    }
+    
+    .data-item .value {
+        font-weight: 500;
+        color: #333;
+    }
+    
+    .full-report {
+        text-align: center;
+        border-top: 1px solid #e1e5e9;
+        padding-top: 20px;
+    }
+`;
+
+const styleSheet = document.createElement('style');
+styleSheet.textContent = additionalStyles;
+document.head.appendChild(styleSheet);
+
+// Инициализация приложения
+document.addEventListener('DOMContentLoaded', () => {
+    new CarPlateChecker();
 });
